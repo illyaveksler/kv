@@ -46,7 +46,3 @@ server(Port) :-
 :- initialization
     server(8000).
 
-% Example usage:
-% 1. POST request to store a key-value pair: {"key":"name", "value":"Alice"} to http://localhost:8000/put
-% 2. GET request to retrieve the value for key "name": http://localhost:8000/get?key=name
-% 3. DELETE request to remove the key-value pair for key "name": http://localhost:8000/delete?key=name
