@@ -71,7 +71,7 @@ tag_key(Request) :-
                     \+ kv_tag(Tag, _)
                 ->  assertz(Tag, [Key]),
                     reply_json(json{status:'Key tagged successfully'})
-                ;   reply_json(json{error:'Key already has that tag', [status(400)]})
+                ;   reply_json(json{error:'Key already has that tag'}, [status(400)])
                 )
             )
         ;   reply_json(json{error:'Invalid request format'}, [status(400)])
@@ -80,8 +80,8 @@ tag_key(Request) :-
     ).
 
 % UNTAG request to remove tag from a key-value pair
-:- http_handler('/untag', tag_key, [method(post)]).
-tag_key(Request) :-
+:- http_handler('/untag', untag_key, [method(post)]).
+untag_key(Request) :-
     http_read_json_dict(Request, Data),
     (   atom_string(Key, Data.key),
         kv_store(Key, _)
@@ -99,7 +99,7 @@ tag_key(Request) :-
                     kv_tag(Tag, [Key])
                 ->  retract(Tag, [Key]),
                     reply_json(json{status:'Key untagged successfully'})
-                ;   reply_json(json{error:'Key does not have that tag', [status(400)]})
+                ;   reply_json(json{error:'Key does not have that tag'}, [status(400)])
                 )
             )
         ;   reply_json(json{error:'Invalid request format'}, [status(400)])
