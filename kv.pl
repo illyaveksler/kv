@@ -5,6 +5,13 @@
 :- use_module(library(http/json)).
 
 :- dynamic(kv_store/2).
+:- dynamic(kv_tag/2).
+
+% KV STORE: kv_store(Key, Value)
+% a fact that holds a key and a value. Used in db asserts and retracts.
+
+% KV TAG: kv_tag(Tag, KeysList)
+% a fact that holds a tag and all of the keys it applies to. Used in db asserts and retracts.
 
 % Define predicates for handling HTTP requests
 
@@ -45,7 +52,32 @@ delete_value(Request) :-
     ;   reply_json(json{error:'Key not found'}, [status(404)])
     ).
 
-
+% TAG request to tag a key-value pair
+:- http_handler('/tag', tag_key, [method(post)]).
+tag_key(Request) :-
+    http_read_json_dict(Request, Data),
+    (   atom_string(Key, Data.key),
+        kv_store(Key, _)
+    ->  (
+            atom_string(Tag, Data.tag)
+        ->  (
+                kv_tag(Tag, OldKeys),
+                \+ member(Key, OldKeys)
+            ->  append(OldKeys, [Key], NewKeys),
+                assertz(kv_tag(Tag, NewKeys)),
+                retract(kv_tag(Tag, OldKeys)),
+                reply_json(json{status:'Key tagged successfully'})
+            ;   (
+                    \+ kv_tag(Tag, _)
+                ->  assertz(Tag, [Key]),
+                    reply_json(json{status:'Key tagged successfully'})
+                ;   reply_json(json{error:'Key already has tag', [status(400)]})
+                )
+            )
+        ;   reply_json(json{error:'Invalid request format'}, [status(400)])
+        )
+    ;   reply_json(json{error:'Key not found'}, [status(404)])
+    ).
 
 % Define the HTTP server handler
 server(Port) :-
