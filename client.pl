@@ -10,7 +10,7 @@ access(get, Key, Reply) :- server(8000, URL),
 
 access(post, Key, Value, Reply) :- server(8000, URL), 
                                 post_url(URL, HREF),
-                                http_post(HREF, form_data([key = Key, value = Value]), Reply, []).
+                                http_post(HREF, json_write_dict({key: Key, value: Value}), Reply, []).
 
 access(delete, Key, Reply) :- server(8000, URL), 
                             delete_url(Key, URL, HREF), 
