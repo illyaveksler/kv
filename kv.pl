@@ -55,9 +55,9 @@ delete_value(Request) :-
 % TAG request to tag a key-value pair
 :- http_handler('/tag', tag_key, [method(post)]).
 tag_key(Request) :-
+    http_parameters(Request, [key(Key, [])]),
     http_read_json_dict(Request, Data),
-    (   atom_string(Key, Data.key),
-        kv_store(Key, _)
+    (   kv_store(Key, _)
     ->  (
             atom_string(Tag, Data.tag)
         ->  (
@@ -82,9 +82,9 @@ tag_key(Request) :-
 % UNTAG request to remove tag from a key-value pair
 :- http_handler('/untag', untag_key, [method(post)]).
 untag_key(Request) :-
+    http_parameters(Request, [key(Key, [])]),
     http_read_json_dict(Request, Data),
-    (   atom_string(Key, Data.key),
-        kv_store(Key, _)
+    (   kv_store(Key, _)
     ->  (
             atom_string(Tag, Data.tag)
         ->  (
