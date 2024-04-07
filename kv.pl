@@ -8,6 +8,13 @@
 
 % Define predicates for handling HTTP requests
 
+% http_handler as basis for GET, POST, DELETE
+% http_handler(Path, Closure, Options)
+% GET, POST, DELETE:
+%   Path is a REST call and thus relative
+%   Closure holds value from handler
+%   Options is a list with single element for REST method
+
 % GET request to retrieve a value
 :- http_handler('/get', get_value, [method(get)]).
 get_value(Request) :-
@@ -37,6 +44,8 @@ delete_value(Request) :-
     ->  reply_json(json{status:'Key-value pair deleted successfully'})
     ;   reply_json(json{error:'Key not found'}, [status(404)])
     ).
+
+
 
 % Define the HTTP server handler
 server(Port) :-
