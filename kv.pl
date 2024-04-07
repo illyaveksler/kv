@@ -25,8 +25,8 @@ get_value(Request) :-
     ).
 
 % POST request to store a key-value pair
-:- http_handler('/put', put_value, [method(post)]).
-put_value(Request) :-
+:- http_handler('/post', post_value, [method(post)]).
+post_value(Request) :-
     http_read_json_dict(Request, Data),
     (   atom_string(Key, Data.key),
         atom_string(Value, Data.value),
