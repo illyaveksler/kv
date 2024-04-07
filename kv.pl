@@ -4,14 +4,14 @@
 :- use_module(library(http/http_parameters)).
 :- use_module(library(http/json)).
 
-:- dynamic(kv_store/2).
+:- dynamic(kv_store/3).
 
 % Define predicates for handling HTTP requests
 
 % http_handler as basis for GET, POST, DELETE
 % http_handler(Path, Closure, Options)
 % GET, POST, DELETE:
-%   Path is a REST call and thus relative
+%   Path is relative and goes to our handlers
 %   Closure holds value from handler
 %   Options is a list with single element for REST method
 
@@ -19,8 +19,8 @@
 :- http_handler('/get', get_value, [method(get)]).
 get_value(Request) :-
     http_parameters(Request, [key(Key, [])]),
-    (   kv_store(Key, Value)
-    ->  reply_json(json{key:Key, value:Value})
+    (   kv_store(Key, Value, Tags)
+    ->  reply_json(json{key:Key, value:Value, tags:Tags})
     ;   reply_json(json{error:'Key not found'}, [status(404)])
     ).
 
@@ -30,8 +30,8 @@ post_value(Request) :-
     http_read_json_dict(Request, Data),
     (   atom_string(Key, Data.key),
         atom_string(Value, Data.value),
-        \+ kv_store(Key, _)
-    ->  assertz(kv_store(Key, Value)),
+        \+ kv_store(Key, _, _)
+    ->  assertz(kv_store(Key, Value, [])),
         reply_json(json{status:'Key-value pair stored successfully'})
     ;   reply_json(json{error:'Key already exists or invalid request format'}, [status(400)])
     ).
@@ -40,12 +40,28 @@ post_value(Request) :-
 :- http_handler('/delete', delete_value, [method(delete)]).
 delete_value(Request) :-
     http_parameters(Request, [key(Key, [])]),
-    (   retract(kv_store(Key, _))
+    (   retract(kv_store(Key, _, _))
     ->  reply_json(json{status:'Key-value pair deleted successfully'})
     ;   reply_json(json{error:'Key not found'}, [status(404)])
     ).
 
-
+% TAG request to tag a key-value pair with a tag
+:- http_handler('/tag', tag_key, [method(post)]).
+tag_key(Request) :-
+    http_read_json_dict(Request, Data),
+    (   atom_string(Key, Data.key)
+    ->  (
+            atom_string(Tag, Data.tag),
+            kv_store(Key, Value, OldTags),
+            \+ member(Tag, OldTags)
+        ->  append(OldTags, [Tag], NewTags),
+            assertz(kv_store(Key, Value, NewTags)),
+            retract(kv_store(Key, Value, OldTags)),
+            reply_json(json{status:'Key tagged successfully'})
+        ;   reply_json(json{error:'Tag already present or invalid request format'}, [status(400)])
+        )
+    ;   reply_json(json{error:'Key not found'}, [status(404)])
+    ).
 
 % Define the HTTP server handler
 server(Port) :-
