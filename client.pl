@@ -6,9 +6,25 @@
 
 
 
+tag_query_kv(Tag1+Tag2, Result) :- tag_query_kv(Tag1, Result1), tag_list_kv(Tag2, Result2), intersection(Result1, Result2, Result).
+tag_query_kv((Tag1)+Tag2, Result) :- tag_query_kv(Tag1, Result1), tag_list_kv(Tag2, Result2), intersection(Result1, Result2, Result).
+tag_query_kv(Tag1+(Tag2), Result) :- tag_query_kv(Tag1, Result1), tag_query_kv(Tag2, Result2), intersection(Result1, Result2, Result).
+tag_query_kv((Tag1)+(Tag2), Result) :- tag_query_kv(Tag1, Result1), tag_query_kv(Tag2, Result2), intersection(Result1, Result2, Result).
+
+tag_query_kv(Tag1|Tag2, Result) :- tag_query_kv(Tag1, Result1), tag_list_kv(Tag2, Result2), union(Result1, Result2, Result).
+tag_query_kv((Tag1)|Tag2, Result) :- tag_query_kv(Tag1, Result1), tag_list_kv(Tag2, Result2), union(Result1, Result2, Result).
+tag_query_kv(Tag1|(Tag2), Result) :- tag_query_kv(Tag1, Result1), tag_query_kv(Tag2, Result2), union(Result1, Result2, Result).
+tag_query_kv((Tag1)|(Tag2), Result) :- tag_query_kv(Tag1, Result1), tag_query_kv(Tag2, Result2), union(Result1, Result2, Result).
+
+tag_query_kv(Tag1-Tag2, Result) :- tag_query_kv(Tag1, Result1), tag_list_kv(Tag2, Result2), subtract(Result1, Result2, Result).
+tag_query_kv((Tag1)-Tag2, Result) :- tag_query_kv(Tag1, Result1), tag_list_kv(Tag2, Result2), subtract(Result1, Result2, Result).
+tag_query_kv(Tag1-(Tag2), Result) :- tag_query_kv(Tag1, Result1), tag_query_kv(Tag2, Result2), subtract(Result1, Result2, Result).
+tag_query_kv((Tag1)-(Tag2), Result) :- tag_query_kv(Tag1, Result1), tag_query_kv(Tag2, Result2), subtract(Result1, Result2, Result).
+
+tag_query_kv(Tag, Result) :- tag_list_kv(Tag, Result).
 
 % gets a value from a key.
-getKV(Key, Result) :- catch(
+get_kv(Key, Result) :- catch(
     access(get, Key, Reply),
     error(_, _),
     (
@@ -24,7 +40,7 @@ getKV(Key, Result) :- catch(
 ).
 
 % posts a key-value pair to the server.
-postKV(Key, Value, Result) :- catch(
+post_kv(Key, Value) :- catch(
     access(post, Key, Value, Reply),
     error(_, _),
     (
@@ -35,35 +51,31 @@ postKV(Key, Value, Result) :- catch(
     \+ (Reply == [])
     ->  atom_json_dict(Text, Reply, []),
         atom_json_dict(Text, Dict, []),
-        print(Dict.status),
-        Result = []
-    ;   Result = []
+        format('~s', Dict.status)
 ).
 
 % deletes a key-value pair from the server.
-deleteKV(Key, Result) :- catch(
+delete_kv(Key) :- catch(
     access(delete, Key, Reply),
     error(_, _),
     (
         Reply = [],
-        format('Key not found: ~s', [Key])
+        format('Key not found: ~s', [])
     )
 ),  (
     \+ (Reply == [])
     ->  atom_json_dict(Text, Reply, []),
         atom_json_dict(Text, Dict, []),
-        print(Dict.status),
-        Result = []
-    ;   Result = []
+        format('~s', Dict.status)
 ).
 
 % gets a list of keys with a certain tag.
-tagQueryKV(Tag, Result) :- catch(
+tag_list_kv(Tag, Result) :- catch(
     access(tagquery, Tag, Reply),
     error(_, _),
     (
         Reply = [],
-        format('Tag not found: ~s', [Tag])
+        format('Tag not found.', [])
     )
 ),  (
     \+ (Reply == [])
@@ -74,7 +86,7 @@ tagQueryKV(Tag, Result) :- catch(
 ).
 
 % tags a key-value pair with a certain tag.
-tagKV(Key, Tag, Result) :- catch(
+tag_kv(Key, Tag) :- catch(
     access(tag, Key, Tag, Reply),
     error(Error, _),
     (
@@ -85,13 +97,11 @@ tagKV(Key, Tag, Result) :- catch(
     \+ (Reply == [])
     ->  atom_json_dict(Text, Reply, []),
         atom_json_dict(Text, Dict, []),
-        print(Dict.status),
-        Result = []
-    ;   Result = []
+        format('~s', Dict.status)
 ).
 
 % removes a certain tag from a tagged key-value pair.
-untagKV(Key, Tag, Result) :- catch(
+untag_kv(Key, Tag, Result) :- catch(
     access(untag, Key, Tag, Reply),
     error(Error, _),
     (
@@ -102,9 +112,7 @@ untagKV(Key, Tag, Result) :- catch(
     \+ (Reply == [])
     ->  atom_json_dict(Text, Reply, []),
         atom_json_dict(Text, Dict, []),
-        print(Dict.status),
-        Result = []
-    ;   Result = []
+        format('~s', Dict.status)
 ).
 
 
