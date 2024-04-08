@@ -4,24 +4,24 @@
 :- use_module(library(http/http_parameters)).
 :- use_module(library(http/json)).
 
+tag_query_kv(Query, Result) :- tag_query_kv_parse(Query, Result), (\+(Result == []) -> true; format('Tag(s) not found.', [])).
 
+tag_query_kv_parse(Tag1+Tag2, Result) :- tag_query_kv_parse(Tag1, Result1), tag_list_kv(Tag2, Result2), intersection(Result1, Result2, Result).
+tag_query_kv_parse((Tag1)+Tag2, Result) :- tag_query_kv_parse(Tag1, Result1), tag_list_kv(Tag2, Result2), intersection(Result1, Result2, Result).
+tag_query_kv_parse(Tag1+(Tag2), Result) :- tag_query_kv_parse(Tag1, Result1), tag_query_kv_parse(Tag2, Result2), intersection(Result1, Result2, Result).
+tag_query_kv_parse((Tag1)+(Tag2), Result) :- tag_query_kv_parse(Tag1, Result1), tag_query_kv_parse(Tag2, Result2), intersection(Result1, Result2, Result).
 
-tag_query_kv(Tag1+Tag2, Result) :- tag_query_kv(Tag1, Result1), tag_list_kv(Tag2, Result2), intersection(Result1, Result2, Result).
-tag_query_kv((Tag1)+Tag2, Result) :- tag_query_kv(Tag1, Result1), tag_list_kv(Tag2, Result2), intersection(Result1, Result2, Result).
-tag_query_kv(Tag1+(Tag2), Result) :- tag_query_kv(Tag1, Result1), tag_query_kv(Tag2, Result2), intersection(Result1, Result2, Result).
-tag_query_kv((Tag1)+(Tag2), Result) :- tag_query_kv(Tag1, Result1), tag_query_kv(Tag2, Result2), intersection(Result1, Result2, Result).
+tag_query_kv_parse(Tag1|Tag2, Result) :- tag_query_kv_parse(Tag1, Result1), tag_list_kv(Tag2, Result2), union(Result1, Result2, Result).
+tag_query_kv_parse((Tag1)|Tag2, Result) :- tag_query_kv_parse(Tag1, Result1), tag_list_kv(Tag2, Result2), union(Result1, Result2, Result).
+tag_query_kv_parse(Tag1|(Tag2), Result) :- tag_query_kv_parse(Tag1, Result1), tag_query_kv_parse(Tag2, Result2), union(Result1, Result2, Result).
+tag_query_kv_parse((Tag1)|(Tag2), Result) :- tag_query_kv_parse(Tag1, Result1), tag_query_kv_parse(Tag2, Result2), union(Result1, Result2, Result).
 
-tag_query_kv(Tag1|Tag2, Result) :- tag_query_kv(Tag1, Result1), tag_list_kv(Tag2, Result2), union(Result1, Result2, Result).
-tag_query_kv((Tag1)|Tag2, Result) :- tag_query_kv(Tag1, Result1), tag_list_kv(Tag2, Result2), union(Result1, Result2, Result).
-tag_query_kv(Tag1|(Tag2), Result) :- tag_query_kv(Tag1, Result1), tag_query_kv(Tag2, Result2), union(Result1, Result2, Result).
-tag_query_kv((Tag1)|(Tag2), Result) :- tag_query_kv(Tag1, Result1), tag_query_kv(Tag2, Result2), union(Result1, Result2, Result).
+tag_query_kv_parse(Tag1-Tag2, Result) :- tag_query_kv_parse(Tag1, Result1), tag_list_kv(Tag2, Result2), subtract(Result1, Result2, Result).
+tag_query_kv_parse((Tag1)-Tag2, Result) :- tag_query_kv_parse(Tag1, Result1), tag_list_kv(Tag2, Result2), subtract(Result1, Result2, Result).
+tag_query_kv_parse(Tag1-(Tag2), Result) :- tag_query_kv_parse(Tag1, Result1), tag_query_kv_parse(Tag2, Result2), subtract(Result1, Result2, Result).
+tag_query_kv_parse((Tag1)-(Tag2), Result) :- tag_query_kv_parse(Tag1, Result1), tag_query_kv_parse(Tag2, Result2), subtract(Result1, Result2, Result).
 
-tag_query_kv(Tag1-Tag2, Result) :- tag_query_kv(Tag1, Result1), tag_list_kv(Tag2, Result2), subtract(Result1, Result2, Result).
-tag_query_kv((Tag1)-Tag2, Result) :- tag_query_kv(Tag1, Result1), tag_list_kv(Tag2, Result2), subtract(Result1, Result2, Result).
-tag_query_kv(Tag1-(Tag2), Result) :- tag_query_kv(Tag1, Result1), tag_query_kv(Tag2, Result2), subtract(Result1, Result2, Result).
-tag_query_kv((Tag1)-(Tag2), Result) :- tag_query_kv(Tag1, Result1), tag_query_kv(Tag2, Result2), subtract(Result1, Result2, Result).
-
-tag_query_kv(Tag, Result) :- tag_list_kv(Tag, Result).
+tag_query_kv_parse(Tag, Result) :- tag_list_kv(Tag, Result).
 
 % gets a value from a key.
 get_kv(Key, Result) :- catch(
@@ -74,8 +74,7 @@ tag_list_kv(Tag, Result) :- catch(
     access(tagquery, Tag, Reply),
     error(_, _),
     (
-        Reply = [],
-        format('Tag not found.', [])
+        Reply = []
     )
 ),  (
     \+ (Reply == [])
