@@ -107,6 +107,15 @@ untag_key(Request) :-
     ;   reply_json(json{error:'Key not found'}, [status(404)])
     ).
 
+% TAGQUERY request to retrieve keys that have the right tag
+:- http_handler('/tagquery', get_tag_keys, [method(get)]).
+get_tag_keys(Request) :-
+    http_parameters(Request, [tag(Tag, [])]),
+    (   kv_tag(Tag, Keys)
+    ->  reply_json(json{tag:Tag, keys:Keys})
+    ;   reply_json(json{error:'Tag not found'}, [status(404)])
+    ).
+
 % Define the HTTP server handler
 server(Port) :-
     http_server(http_dispatch, [port(Port)]).
