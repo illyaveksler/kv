@@ -7,57 +7,101 @@
 
 
 
-
+% gets a value from a key.
 getKV(Key, Result) :- catch(
-    access(get, Key, Result),
+    access(get, Key, Reply),
     error(_, _),
     (
-        Result = [],
+        Reply = [],
         format('Key not found.', [])
     )
+),  (
+    \+ (Reply == [])
+    ->  atom_json_dict(Text, Reply, []),
+        atom_json_dict(Text, Dict, []),
+        Result = Dict.value
+    ;   Result = []
 ).
 
+% posts a key-value pair to the server.
 postKV(Key, Value, Result) :- catch(
-    access(post, Key, Value, Result),
+    access(post, Key, Value, Reply),
     error(_, _),
     (
-        Result = [],
+        Reply = [],
         format('Key either already exists, or the post is invalid.', [])
     )
+),  (
+    \+ (Reply == [])
+    ->  atom_json_dict(Text, Reply, []),
+        atom_json_dict(Text, Dict, []),
+        print(Dict.status),
+        Result = []
+    ;   Result = []
 ).
 
+% deletes a key-value pair from the server.
 deleteKV(Key, Result) :- catch(
-    access(delete, Key, Result),
+    access(delete, Key, Reply),
     error(_, _),
     (
-        Result = [],
+        Reply = [],
         format('Key not found: ~s', [Key])
     )
+),  (
+    \+ (Reply == [])
+    ->  atom_json_dict(Text, Reply, []),
+        atom_json_dict(Text, Dict, []),
+        print(Dict.status),
+        Result = []
+    ;   Result = []
 ).
 
 tagQueryKV(Tag, Result) :- catch(
-    access(tagquery, Tag, Result),
+    access(tagquery, Tag, Reply),
     error(_, _),
     (
-        Result = [],
+        Reply = [],
         format('Tag not found: ~s', [Tag])
     )
+),  (
+    \+ (Reply == [])
+    ->  atom_json_dict(Text, Reply, []),
+        atom_json_dict(Text, Dict, []),
+        Result = Dict.keys
+    ;   Result = []
 ).
 
 tagKV(Key, Tag, Result) :- catch(
-    access(tag, Key, Tag, Result),
-    error(_, _),
+    access(tag, Key, Tag, Reply),
+    error(Error, _),
     (
-        Result = []
+        Reply = [],
+        print(Error)
     )
+),  (
+    \+ (Reply == [])
+    ->  atom_json_dict(Text, Reply, []),
+        atom_json_dict(Text, Dict, []),
+        print(Dict.status),
+        Result = []
+    ;   Result = []
 ).
 
 untagKV(Key, Tag, Result) :- catch(
-    access(tag, Key, Tag, Result),
-    error(_, _),
+    access(tag, Key, Tag, Reply),
+    error(Error, _),
     (
-        Result = []
+        Reply = [],
+        print(Error)
     )
+),  (
+    \+ (Reply == [])
+    ->  atom_json_dict(Text, Reply, []),
+        atom_json_dict(Text, Dict, []),
+        print(Dict.status),
+        Result = []
+    ;   Result = []
 ).
 
 
@@ -82,11 +126,11 @@ access(post, Key, Value, Reply) :- portURL(8000, URL),
 
 access(tag, Key, Tag, Reply) :- portURL(8000, URL),
                                 tag_url(URL, HREF),
-                                http_post(HREF, json(json{key: Key, tag: Tag}), Reply, []).
+                                http_put(HREF, json(json{key: Key, tag: Tag}), Reply, []).
 
 access(untag, Key, Tag, Reply) :- portURL(8000, URL),
                                 untag_url(URL, HREF),
-                                http_post(HREF, json(json{key: Key, tag: Tag}), Reply, []).
+                                http_put(HREF, json(json{key: Key, tag: Tag}), Reply, []).
 
 
 portURL(Port, HREF) :- format(atom(HREF), 'http://localhost:~d~s',[Port,'/']).

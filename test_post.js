@@ -3,10 +3,10 @@ dns.setDefaultResultOrder('ipv4first');
 
 const test_body = JSON.stringify({
     key: "a",
-    value: "Fix my bugs"
+    tag: "tag1"
   });
   
-const url = new URL("http://localhost:8000/post");
+const url = new URL("http://localhost:8000/tag");
 
 fetch(url, {
   method: "POST",
