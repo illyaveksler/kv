@@ -69,7 +69,7 @@ tag_key(Request) :-
                 reply_json(json{status:'Key tagged successfully'})
             ;   (
                     \+ kv_tag(Tag, _)
-                ->  assertz(Tag, [Key]),
+                ->  assertz(kv_tag(Tag, [Key])),
                     reply_json(json{status:'Key tagged successfully'})
                 ;   reply_json(json{error:'Key already has that tag'}, [status(400)])
                 )
@@ -89,18 +89,16 @@ untag_key(Request) :-
             atom_string(Tag, Data.tag)
         ->  (
                 kv_tag(Tag, OldKeys),
-                member(Key, OldKeys),
-                \+ same_length(OldKeys, [Key])
+                member(Key, OldKeys)
             ->  delete(OldKeys, Key, NewKeys),
                 assertz(kv_tag(Tag, NewKeys)),
                 retract(kv_tag(Tag, OldKeys)),
+                (
+                    kv_tag(Tag, [])
+                ->  retract(kv_tag(Tag, []))
+                ),
                 reply_json(json{status:'Key untagged successfully'})
-            ;   (
-                    kv_tag(Tag, [Key])
-                ->  retract(Tag, [Key]),
-                    reply_json(json{status:'Key untagged successfully'})
-                ;   reply_json(json{error:'Key does not have that tag'}, [status(400)])
-                )
+            ;   reply_json(json{error:'Key does not have that tag'}, [status(400)])
             )
         ;   reply_json(json{error:'Invalid request format'}, [status(400)])
         )

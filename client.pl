@@ -57,6 +57,7 @@ deleteKV(Key, Result) :- catch(
     ;   Result = []
 ).
 
+% gets a list of keys with a certain tag.
 tagQueryKV(Tag, Result) :- catch(
     access(tagquery, Tag, Reply),
     error(_, _),
@@ -72,6 +73,7 @@ tagQueryKV(Tag, Result) :- catch(
     ;   Result = []
 ).
 
+% tags a key-value pair with a certain tag.
 tagKV(Key, Tag, Result) :- catch(
     access(tag, Key, Tag, Reply),
     error(Error, _),
@@ -88,8 +90,9 @@ tagKV(Key, Tag, Result) :- catch(
     ;   Result = []
 ).
 
+% removes a certain tag from a tagged key-value pair.
 untagKV(Key, Tag, Result) :- catch(
-    access(tag, Key, Tag, Reply),
+    access(untag, Key, Tag, Reply),
     error(Error, _),
     (
         Reply = [],
@@ -107,7 +110,7 @@ untagKV(Key, Tag, Result) :- catch(
 
 
 
-
+% access predicates. originally used for direct access, now operating as backend.
 access(get, Key, Reply) :- portURL(8000, URL), 
                             get_url(Key, URL, HREF),
                             http_get(HREF, Reply, []).
