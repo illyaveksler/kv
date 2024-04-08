@@ -48,6 +48,6 @@ consult('client.pl').
     ```
 
     The query can be modified by three operators:
-    - **+**: Intersection between two sets
-    - **|**: Union between two sets
-    - **-**: Subtracting the second set from the first
+    - **`+`**: Intersection between two sets
+    - **`|`**: Union between two sets
+    - **`-`**: Subtracting the second set from the first
