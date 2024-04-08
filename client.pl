@@ -4,24 +4,33 @@
 :- use_module(library(http/http_parameters)).
 :- use_module(library(http/json)).
 
+% main query utility. gets lists of keys from a query about tags.
 tag_query_kv(Query, Result) :- tag_query_kv_parse(Query, Result), (\+(Result == []) -> true; format('Tag(s) not found.', [])).
 
+% TAG QUERY PARSING (brackets are for pattern matching, the last two having brackets around the second term allows proper order of operations)
+
+% handles intersections (+ used as 'and' operator because & was already a symbol)
 tag_query_kv_parse(Tag1+Tag2, Result) :- tag_query_kv_parse(Tag1, Result1), tag_list_kv(Tag2, Result2), intersection(Result1, Result2, Result).
 tag_query_kv_parse((Tag1)+Tag2, Result) :- tag_query_kv_parse(Tag1, Result1), tag_list_kv(Tag2, Result2), intersection(Result1, Result2, Result).
 tag_query_kv_parse(Tag1+(Tag2), Result) :- tag_query_kv_parse(Tag1, Result1), tag_query_kv_parse(Tag2, Result2), intersection(Result1, Result2, Result).
 tag_query_kv_parse((Tag1)+(Tag2), Result) :- tag_query_kv_parse(Tag1, Result1), tag_query_kv_parse(Tag2, Result2), intersection(Result1, Result2, Result).
 
+% handles unions (| as 'or' operator)
 tag_query_kv_parse(Tag1|Tag2, Result) :- tag_query_kv_parse(Tag1, Result1), tag_list_kv(Tag2, Result2), union(Result1, Result2, Result).
 tag_query_kv_parse((Tag1)|Tag2, Result) :- tag_query_kv_parse(Tag1, Result1), tag_list_kv(Tag2, Result2), union(Result1, Result2, Result).
 tag_query_kv_parse(Tag1|(Tag2), Result) :- tag_query_kv_parse(Tag1, Result1), tag_query_kv_parse(Tag2, Result2), union(Result1, Result2, Result).
 tag_query_kv_parse((Tag1)|(Tag2), Result) :- tag_query_kv_parse(Tag1, Result1), tag_query_kv_parse(Tag2, Result2), union(Result1, Result2, Result).
 
+% handles subtractions (- as operator)
 tag_query_kv_parse(Tag1-Tag2, Result) :- tag_query_kv_parse(Tag1, Result1), tag_list_kv(Tag2, Result2), subtract(Result1, Result2, Result).
 tag_query_kv_parse((Tag1)-Tag2, Result) :- tag_query_kv_parse(Tag1, Result1), tag_list_kv(Tag2, Result2), subtract(Result1, Result2, Result).
 tag_query_kv_parse(Tag1-(Tag2), Result) :- tag_query_kv_parse(Tag1, Result1), tag_query_kv_parse(Tag2, Result2), subtract(Result1, Result2, Result).
 tag_query_kv_parse((Tag1)-(Tag2), Result) :- tag_query_kv_parse(Tag1, Result1), tag_query_kv_parse(Tag2, Result2), subtract(Result1, Result2, Result).
 
+% handles atomic tags
 tag_query_kv_parse(Tag, Result) :- tag_list_kv(Tag, Result).
+
+
 
 % gets a value from a key.
 get_kv(Key, Result) :- catch(
@@ -39,6 +48,8 @@ get_kv(Key, Result) :- catch(
     ;   Result = []
 ).
 
+
+
 % posts a key-value pair to the server.
 post_kv(Key, Value) :- catch(
     access(post, Key, Value, Reply),
@@ -53,6 +64,8 @@ post_kv(Key, Value) :- catch(
         atom_json_dict(Text, Dict, []),
         format('~s', Dict.status)
 ).
+
+
 
 % deletes a key-value pair from the server.
 delete_kv(Key) :- catch(
@@ -69,6 +82,8 @@ delete_kv(Key) :- catch(
         format('~s', Dict.status)
 ).
 
+
+
 % gets a list of keys with a certain tag.
 tag_list_kv(Tag, Result) :- catch(
     access(tagquery, Tag, Reply),
@@ -84,6 +99,8 @@ tag_list_kv(Tag, Result) :- catch(
     ;   Result = []
 ).
 
+
+
 % tags a key-value pair with a certain tag.
 tag_kv(Key, Tag) :- catch(
     access(tag, Key, Tag, Reply),
@@ -98,6 +115,8 @@ tag_kv(Key, Tag) :- catch(
         atom_json_dict(Text, Dict, []),
         format('~s', Dict.status)
 ).
+
+
 
 % removes a certain tag from a tagged key-value pair.
 untag_kv(Key, Tag, Result) :- catch(
