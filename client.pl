@@ -9,23 +9,26 @@ tag_query_kv(Query, Result) :- tag_query_kv_parse(Query, Result), (\+(Result == 
 
 % TAG QUERY PARSING (brackets are for pattern matching, the last two having brackets around the second term allows proper order of operations)
 
+tag_query_kv_parse((Tag1)+(Tag2), Result) :- tag_query_kv_parse(Tag1, Result1), tag_query_kv_parse(Tag2, Result2), intersection(Result1, Result2, Result).
+tag_query_kv_parse((Tag1)|(Tag2), Result) :- tag_query_kv_parse(Tag1, Result1), tag_query_kv_parse(Tag2, Result2), union(Result1, Result2, Result).
+tag_query_kv_parse((Tag1)-(Tag2), Result) :- tag_query_kv_parse(Tag1, Result1), tag_query_kv_parse(Tag2, Result2), subtract(Result1, Result2, Result).
+
+tag_query_kv_parse(Tag1+(Tag2), Result) :- tag_query_kv_parse(Tag1, Result1), tag_query_kv_parse(Tag2, Result2), intersection(Result1, Result2, Result).
+tag_query_kv_parse(Tag1|(Tag2), Result) :- tag_query_kv_parse(Tag1, Result1), tag_query_kv_parse(Tag2, Result2), union(Result1, Result2, Result).
+tag_query_kv_parse(Tag1-(Tag2), Result) :- tag_query_kv_parse(Tag1, Result1), tag_query_kv_parse(Tag2, Result2), subtract(Result1, Result2, Result).
+
+tag_query_kv_parse((Tag1)+Tag2, Result) :- tag_query_kv_parse(Tag1, Result1), tag_list_kv(Tag2, Result2), intersection(Result1, Result2, Result).
+tag_query_kv_parse((Tag1)|Tag2, Result) :- tag_query_kv_parse(Tag1, Result1), tag_list_kv(Tag2, Result2), union(Result1, Result2, Result).
+tag_query_kv_parse((Tag1)-Tag2, Result) :- tag_query_kv_parse(Tag1, Result1), tag_list_kv(Tag2, Result2), subtract(Result1, Result2, Result).
+
 % handles intersections (+ used as 'and' operator because & was already a symbol)
 tag_query_kv_parse(Tag1+Tag2, Result) :- tag_query_kv_parse(Tag1, Result1), tag_list_kv(Tag2, Result2), intersection(Result1, Result2, Result).
-tag_query_kv_parse((Tag1)+Tag2, Result) :- tag_query_kv_parse(Tag1, Result1), tag_list_kv(Tag2, Result2), intersection(Result1, Result2, Result).
-tag_query_kv_parse(Tag1+(Tag2), Result) :- tag_query_kv_parse(Tag1, Result1), tag_query_kv_parse(Tag2, Result2), intersection(Result1, Result2, Result).
-tag_query_kv_parse((Tag1)+(Tag2), Result) :- tag_query_kv_parse(Tag1, Result1), tag_query_kv_parse(Tag2, Result2), intersection(Result1, Result2, Result).
 
 % handles unions (| as 'or' operator)
 tag_query_kv_parse(Tag1|Tag2, Result) :- tag_query_kv_parse(Tag1, Result1), tag_list_kv(Tag2, Result2), union(Result1, Result2, Result).
-tag_query_kv_parse((Tag1)|Tag2, Result) :- tag_query_kv_parse(Tag1, Result1), tag_list_kv(Tag2, Result2), union(Result1, Result2, Result).
-tag_query_kv_parse(Tag1|(Tag2), Result) :- tag_query_kv_parse(Tag1, Result1), tag_query_kv_parse(Tag2, Result2), union(Result1, Result2, Result).
-tag_query_kv_parse((Tag1)|(Tag2), Result) :- tag_query_kv_parse(Tag1, Result1), tag_query_kv_parse(Tag2, Result2), union(Result1, Result2, Result).
 
 % handles subtractions (- as operator)
 tag_query_kv_parse(Tag1-Tag2, Result) :- tag_query_kv_parse(Tag1, Result1), tag_list_kv(Tag2, Result2), subtract(Result1, Result2, Result).
-tag_query_kv_parse((Tag1)-Tag2, Result) :- tag_query_kv_parse(Tag1, Result1), tag_list_kv(Tag2, Result2), subtract(Result1, Result2, Result).
-tag_query_kv_parse(Tag1-(Tag2), Result) :- tag_query_kv_parse(Tag1, Result1), tag_query_kv_parse(Tag2, Result2), subtract(Result1, Result2, Result).
-tag_query_kv_parse((Tag1)-(Tag2), Result) :- tag_query_kv_parse(Tag1, Result1), tag_query_kv_parse(Tag2, Result2), subtract(Result1, Result2, Result).
 
 % handles atomic tags
 tag_query_kv_parse(Tag, Result) :- tag_list_kv(Tag, Result).
@@ -119,7 +122,7 @@ tag_kv(Key, Tag) :- catch(
 
 
 % removes a certain tag from a tagged key-value pair.
-untag_kv(Key, Tag, Result) :- catch(
+untag_kv(Key, Tag) :- catch(
     access(untag, Key, Tag, Reply),
     error(Error, _),
     (
